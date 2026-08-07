@@ -1,0 +1,15 @@
+{
+    "name": "q22",
+    "scripts": {
+        "tsx": "tsx",
+        "test-beach": "jest --coverage beach.test.ts",
+        "start": "tsx server.ts",
+        "start-coverage": "c8 --reporter=text --reporter=lcov tsx server.ts",
+        "test-server": "jest server.jest.test.ts",
+        "dev": "tsx watch --clear-screen=false --include 'config.json' server.ts"
+    },
+    "jest": {
+        "maxWorkers": 1,
+        "preset": "ts-jest"
+    }
+}

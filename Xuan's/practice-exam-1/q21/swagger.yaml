@@ -1,0 +1,390 @@
+openapi: 3.0.3
+info:
+  title: Soccer Teams API
+  version: 1.0.0
+  description: API to register and manage soccer teams and players
+
+servers:
+  - url: "{protocol}://{host}:{port}"
+    variables:
+      protocol:
+        default: http
+      host:
+        default: '127.0.0.1'
+      port:
+        default: '49152'
+
+tags:
+  - name: Soccer Teams
+
+paths:
+  /clear:
+    delete:
+      summary: Clear all teams and stats
+      description: Resets all data to initial empty state.
+      tags:
+        - Soccer Teams
+      responses:
+        '200':
+          description: Data cleared successfully
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /team/create:
+    post:
+      summary: Create a new team
+      description: Creates a new soccer team.
+      tags:
+        - Soccer Teams
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - teamName
+                - players
+              properties:
+                teamName:
+                  type: string
+                  minLength: 3
+                  maxLength: 20
+                  example: Manchester United
+                players:
+                  type: array
+                  items:
+                    type: string
+                  maxItems: 11
+                  example: ["Ronaldo", "Messi"]
+      responses:
+        '200':
+          description: Team created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  teamId:
+                    type: number
+                    example: 1
+        '400':
+          description: |
+            If any of the following are true:
+              - **INVALID_TEAM_NAME**
+                - Team name is empty
+                - Team name is shorter than 3 or longer than 20 characters
+                - Team name is already used by another team
+              - **INVALID_PLAYERS**
+                - The number of players is greater than 11
+                - The player is already in another team
+                - Duplicate player in the same team
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: ERROR_TYPE
+                  message:
+                    type: string
+                    example: Descriptive error message here
+
+  /team/list:
+    get:
+      summary: Get list of teams by IDs
+      description: Retrieves multiple teams given a list of comma-separated team Ids. Returns the teams in the order of the ids given.
+      tags:
+        - Soccer Teams
+      parameters:
+        - name: teamIds
+          in: query
+          required: true
+          description: Comma-separated list of team IDs (can contain spaces before or after each id)
+          schema:
+            type: string
+            example: "1, 2"
+      responses:
+        '200':
+          description: Teams list retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  teams:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        teamName:
+                          type: string
+                          example: Manchester United
+                        players:
+                          type: array
+                          items:
+                            type: string
+                          example: ["Ronaldo"]
+                        stats:
+                          type: object
+                          properties:
+                            playerTransferLog:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  oldPlayer:
+                                    type: string
+                                    example: 'Dave'
+                                  newPlayer:
+                                    type: string
+                                    example: 'Ronaldo'
+                                  timeUpdated:
+                                    type: number
+                                    example: 1752269148
+                                    description: Integer unix timestamp (in seconds)
+        '400':
+          description: |
+            If any of the following are true:
+              - **INVALID_TEAM_ID**
+                - One of the teamIds does not refer to a valid team
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: ERROR_TYPE
+                  message:
+                    type: string
+                    example: Descriptive error message here
+
+  /team/{teamid}:
+    get:
+      summary: Get team by teamId
+      description: Retrieve a single team's details by its ID.
+      tags:
+        - Soccer Teams
+      parameters:
+        - name: teamid
+          in: path
+          required: true
+          schema:
+            type: number
+          description: Team ID
+          example: 1
+      responses:
+        '200':
+          description: Team retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  teamName:
+                    type: string
+                    example: Manchester United
+                  players:
+                    type: array
+                    items:
+                      type: string
+                    example: ["Ronaldo"]
+                  stats:
+                    type: object
+                    properties:
+                      playerTransferLog:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            oldPlayer:
+                              type: string
+                              example: 'Dave'
+                            newPlayer:
+                              type: string
+                              example: 'Ronaldo'
+                            timeUpdated:
+                              type: number
+                              example: 1752269148
+                              description: Integer unix timestamp (in seconds)
+
+        '400':
+          description: |
+            If any of the following are true:
+              - **INVALID_TEAM_ID**
+                - teamId does not refer to a valid team
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: ERROR_TYPE
+                  message:
+                    type: string
+                    example: Descriptive error message here
+  
+  /team/{teamid}/player:
+    put:
+      summary: Replace a player
+      description: |
+        Replace an existing player with a new player.
+      tags:
+        - Soccer Teams
+      parameters:
+        - name: role
+          in: header
+          required: true
+          schema:
+            type: string
+          description: User role
+          example: admin
+        - name: teamid
+          in: path
+          required: true
+          schema:
+            type: number
+          description: Team ID
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                oldPlayerName:
+                  type: string
+                  nullable: true
+                  example: Ronaldo
+                newPlayerName:
+                  type: string
+                  example: Messi
+              required:
+                - oldPlayerName
+                - newPlayerName
+      responses:
+        '200':
+          description: Player replaced successfully
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: |
+            If any of the following are true:
+              - **INVALID_TEAM_ID**
+                - TeamId does not refer to a valid team
+              - **INVALID_OLD_PLAYER**
+                - oldPlayerName does not refer to a valid player in the team
+              - **INVALID_NEW_PLAYER**
+                - newPlayerName is empty string
+                - newPlayerName exists in the same team
+                - newPlayerName is already used by another team
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: ERROR_TYPE
+                  message:
+                    type: string
+                    example: Descriptive error message here
+        '403':
+          description: |
+            If any of the following are true:
+              - **INVALID_ROLE**
+                - The user role is not 'admin'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: ERROR_TYPE
+                  message:
+                    type: string
+                    example: Descriptive error message here.
+
+  /team/{teamid}/{playername}:
+    put:
+      summary: Update team by adding a new player name
+      description: |
+        Update team by adding a new player name
+          - A team can have at most 11 players.
+      tags:
+        - Soccer Teams
+      parameters:
+        - name: role
+          in: header
+          required: true
+          schema:
+            type: string
+          description: User role
+          example: admin
+        - name: teamid
+          in: path
+          required: true
+          schema:
+            type: number
+          description: Team ID
+          example: 1
+        - name: playername
+          in: path
+          required: true
+          schema:
+            type: string
+          description: New player name
+          example: 'Ronaldo'
+      responses:
+        '200':
+          description: Player added successfully
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: |
+            If any of the following are true:
+              - **INVALID_TEAM_ID**
+                - TeamId does not refer to a valid team
+              - **INVALID_PLAYERS**
+                - the number of players is already 11
+              - **INVALID_PLAYER_NAME**
+                - The player is already in the same team
+                - The player is already in another team
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: ERROR_TYPE
+                  message:
+                    type: string
+                    example: Descriptive error message here
+        '403':
+          description: |
+            If any of the following are true:
+              - **INVALID_ROLE**
+                - The user role is not 'admin'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: ERROR_TYPE
+                  message:
+                    type: string
+                    example: Descriptive error message here

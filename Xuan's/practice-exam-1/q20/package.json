@@ -1,0 +1,10 @@
+{
+  "name": "q27",
+  "type": "module",
+  "scripts": {
+    "test": "NODE_OPTIONS='--experimental-vm-modules' jest",
+    "lint": "eslint",
+    "tsc": "tsc --noEmit",
+    "tsx": "tsx"
+  }
+}

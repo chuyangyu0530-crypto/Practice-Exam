@@ -1,0 +1,14 @@
+{
+    "name": "auction",
+    "scripts": {
+        "test": "jest",
+        "tsc": "tsc --noEmit",
+        "tsx": "tsx",
+        "lint": "eslint",
+        "lint-fix": "eslint --fix"
+    },
+    "jest": {
+        "maxWorkers": 1,
+        "preset": "ts-jest"
+    }
+}

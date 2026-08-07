@@ -1,0 +1,263 @@
+openapi: 3.0.3
+info:
+  title: Bicycle Fleet API
+  version: 1.0.0
+  description: Manage bicycles in a campus bicycle-hire fleet. The API has five CRUD routes plus a clear route.
+servers:
+- url: http://127.0.0.1:49154
+paths:
+  /clear:
+    delete:
+      summary: Clear all bicycles
+      tags:
+      - Bicycle Fleet
+      responses:
+        '200':
+          description: All data was cleared.
+          content:
+            application/json:
+              schema:
+                type: object
+  /bicycle/register:
+    post:
+      summary: Create a new bicycle
+      tags:
+      - Bicycle Fleet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - label
+              - type
+              - hourlyRate
+              properties:
+                label:
+                  type: string
+                  minLength: 2
+                  maxLength: 20
+                  example: BIKE-14
+                type:
+                  type: string
+                  enum:
+                  - Road
+                  - Mountain
+                  - Hybrid
+                  example: Road
+                hourlyRate:
+                  type: number
+                  minimum: 1
+                  maximum: 100
+                  example: 12.5
+      responses:
+        '200':
+          description: Bicycle created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - bicycleId
+                properties:
+                  bicycleId:
+                    type: integer
+        '400':
+          description: 'Possible errors: INVALID_BICYCLE_LABEL, INVALID_BICYCLE_TYPE, INVALID_HOURLY_RATE, BICYCLE_ALREADY_EXISTS'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorObject'
+  /bicycle/list:
+    get:
+      summary: List or filter bicycles
+      tags:
+      - Bicycle Fleet
+      parameters:
+      - in: query
+        name: available
+        required: true
+        description: Whether returned bicycles must be available.
+        schema:
+          type: boolean
+        example: false
+      responses:
+        '200':
+          description: Matching bicycles.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - bicycles
+                properties:
+                  bicycles:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/BicycleData'
+        '400':
+          description: 'Possible errors: INVALID_AVAILABILITY'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorObject'
+  /bicycle/{bicycleid}:
+    get:
+      summary: Get one bicycle
+      tags:
+      - Bicycle Fleet
+      parameters:
+      - in: path
+        name: bicycleid
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Bicycle details.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - bicycle
+                properties:
+                  bicycle:
+                    $ref: '#/components/schemas/BicycleData'
+        '400':
+          description: 'Possible errors: INVALID_BICYCLE_ID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorObject'
+    put:
+      summary: Update the available field of a bicycle
+      tags:
+      - Bicycle Fleet
+      parameters:
+      - in: path
+        name: bicycleid
+        required: true
+        schema:
+          type: integer
+      - in: header
+        name: role
+        required: true
+        description: Authorization value required to modify this bicycle.
+        schema:
+          type: string
+        example: fleet-manager
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - available
+              properties:
+                available:
+                  type: boolean
+                  example: false
+      responses:
+        '200':
+          description: Bicycle updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: 'Possible errors: INVALID_BICYCLE_ID, INVALID_AVAILABILITY'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorObject'
+        '403':
+          description: 'Possible errors: INVALID_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorObject'
+    delete:
+      summary: Delete one bicycle
+      tags:
+      - Bicycle Fleet
+      parameters:
+      - in: path
+        name: bicycleid
+        required: true
+        schema:
+          type: integer
+      - in: header
+        name: role
+        required: true
+        description: Authorization value required to delete this bicycle.
+        schema:
+          type: string
+        example: fleet-manager
+      - in: query
+        name: retired
+        required: true
+        description: Must be true to confirm that the bicycle is retired.
+        schema:
+          type: boolean
+        example: true
+      responses:
+        '200':
+          description: Bicycle deleted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: 'Possible errors: INVALID_BICYCLE_ID, RETIREMENT_CONFIRMATION_REQUIRED'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorObject'
+        '403':
+          description: 'Possible errors: INVALID_ROLE'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorObject'
+components:
+  schemas:
+    ErrorObject:
+      type: object
+      required:
+      - error
+      - message
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+    BicycleData:
+      type: object
+      required:
+      - bicycleId
+      - label
+      - type
+      - hourlyRate
+      - available
+      properties:
+        bicycleId:
+          type: integer
+        label:
+          type: string
+          minLength: 2
+          maxLength: 20
+        type:
+          type: string
+          enum:
+          - Road
+          - Mountain
+          - Hybrid
+        hourlyRate:
+          type: number
+          minimum: 1
+          maximum: 100
+        available:
+          type: boolean

@@ -1,0 +1,14 @@
+{
+    "name": "soccer",
+    "scripts": {
+        "test": "jest soccer.test.ts",
+        "tsx": "tsx",
+        "tsc": "tsc --noEmit",
+        "start": "tsx server.ts",
+        "dev": "tsx watch --clear-screen=false --include 'config.json' server.ts"
+    },
+    "jest": {
+        "maxWorkers": 1,
+        "preset": "ts-jest"
+    }
+}

@@ -1,0 +1,269 @@
+openapi: 3.0.3
+info:
+  title: Animal Shelter API
+  version: 1.0.0
+  description: Manage animals currently registered at a small shelter. The API has five CRUD routes plus a clear
+    route.
+servers:
+- url: http://127.0.0.1:49155
+paths:
+  /clear:
+    delete:
+      summary: Clear all animals
+      tags:
+      - Animal Shelter
+      responses:
+        '200':
+          description: All data was cleared.
+          content:
+            application/json:
+              schema:
+                type: object
+  /animal/add:
+    post:
+      summary: Create a new animal
+      tags:
+      - Animal Shelter
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - name
+              - species
+              - age
+              properties:
+                name:
+                  type: string
+                  minLength: 2
+                  maxLength: 30
+                  example: Milo
+                species:
+                  type: string
+                  enum:
+                  - Dog
+                  - Cat
+                  - Rabbit
+                  example: Dog
+                age:
+                  type: integer
+                  minimum: 0
+                  maximum: 30
+                  example: 4
+      responses:
+        '200':
+          description: Animal created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - animalId
+                properties:
+                  animalId:
+                    type: integer
+        '400':
+          description: 'Possible errors: INVALID_ANIMAL_NAME, INVALID_ANIMAL_SPECIES, INVALID_ANIMAL_AGE, ANIMAL_ALREADY_EXISTS'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorObject'
+  /animal/search:
+    get:
+      summary: List or filter animals
+      tags:
+      - Animal Shelter
+      parameters:
+      - in: query
+        name: species
+        required: true
+        description: Species to return.
+        schema:
+          type: string
+          enum:
+          - Dog
+          - Cat
+          - Rabbit
+        example: Dog
+      responses:
+        '200':
+          description: Matching animals.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - animals
+                properties:
+                  animals:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AnimalData'
+        '400':
+          description: 'Possible errors: INVALID_ANIMAL_SPECIES'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorObject'
+  /animal/{animalid}:
+    get:
+      summary: Get one animal
+      tags:
+      - Animal Shelter
+      parameters:
+      - in: path
+        name: animalid
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Animal details.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - animal
+                properties:
+                  animal:
+                    $ref: '#/components/schemas/AnimalData'
+        '400':
+          description: 'Possible errors: INVALID_ANIMAL_ID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorObject'
+    patch:
+      summary: Update the adopted field of a animal
+      tags:
+      - Animal Shelter
+      parameters:
+      - in: path
+        name: animalid
+        required: true
+        schema:
+          type: integer
+      - in: header
+        name: staff-token
+        required: true
+        description: Authorization value required to modify this animal.
+        schema:
+          type: string
+        example: shelter-staff
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - adopted
+              properties:
+                adopted:
+                  type: boolean
+                  example: true
+      responses:
+        '200':
+          description: Animal updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: 'Possible errors: INVALID_ANIMAL_ID, INVALID_ADOPTION_STATUS'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorObject'
+        '403':
+          description: 'Possible errors: INVALID_STAFF_TOKEN'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorObject'
+    delete:
+      summary: Delete one animal
+      tags:
+      - Animal Shelter
+      parameters:
+      - in: path
+        name: animalid
+        required: true
+        schema:
+          type: integer
+      - in: header
+        name: staff-token
+        required: true
+        description: Authorization value required to delete this animal.
+        schema:
+          type: string
+        example: shelter-staff
+      - in: query
+        name: reason
+        required: true
+        description: Reason for removing the animal record.
+        schema:
+          type: string
+          minLength: 3
+        example: transferred
+      responses:
+        '200':
+          description: Animal deleted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: 'Possible errors: INVALID_ANIMAL_ID, INVALID_REMOVAL_REASON'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorObject'
+        '403':
+          description: 'Possible errors: INVALID_STAFF_TOKEN'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorObject'
+components:
+  schemas:
+    ErrorObject:
+      type: object
+      required:
+      - error
+      - message
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+    AnimalData:
+      type: object
+      required:
+      - animalId
+      - name
+      - species
+      - age
+      - adopted
+      properties:
+        animalId:
+          type: integer
+        name:
+          type: string
+          minLength: 2
+          maxLength: 30
+        species:
+          type: string
+          enum:
+          - Dog
+          - Cat
+          - Rabbit
+        age:
+          type: integer
+          minimum: 0
+          maximum: 30
+        adopted:
+          type: boolean
